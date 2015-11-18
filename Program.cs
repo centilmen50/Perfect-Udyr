@@ -20,6 +20,7 @@ namespace Perfect_Udyr
         public static Spell.Active W;
         public static Spell.Active E;
         public static Spell.Active R;
+        static Spell.Targeted Smite = null;
         public static Menu Menu, FarmingMenu, MiscMenu, DrawMenu, HarassMenu, ComboMenu, SmiteMenu, UpdateMenu;
         static Item Healthpot;
         static Item Manapot;
@@ -30,6 +31,7 @@ namespace Perfect_Udyr
         private static readonly int[] SmiteGrey = { 3711, 3722, 3721, 3720, 3719 };
         private static readonly int[] SmiteRed = { 3715, 3718, 3717, 3716, 3714 };
         private static readonly int[] SmiteBlue = { 3706, 3710, 3709, 3708, 3707 };
+
 
 
         static void Main(string[] args)
@@ -68,7 +70,11 @@ namespace Perfect_Udyr
             if (Player.Instance.ChampionName != "Udyr")
                 return;
 
-
+            SpellDataInst smite = _Player.Spellbook.Spells.Where(spell => spell.Name.Contains("smite")).Any() ? _Player.Spellbook.Spells.Where(spell => spell.Name.Contains("smite")).First() : null;
+            if (smite != null)
+            {
+                Smite = new Spell.Targeted(smite.Slot, 500);
+            }
             Bootstrap.Init(null);
 
             Healthpot = new Item(2003, 0);
@@ -120,7 +126,7 @@ namespace Perfect_Udyr
             FarmingMenu.Add("QjungleMana", new Slider("Mana < %", 30, 0, 100));
             FarmingMenu.Add("Wjungle", new CheckBox("Use W in Jungle"));
             FarmingMenu.Add("WjungleMana", new Slider("Mana < %", 30, 0, 100));
-            FarmingMenu.Add("WjungleHealth", new Slider("Health < %", 60, 0, 100));
+            FarmingMenu.Add("WjungleHealth", new Slider("Health < %", 85, 0, 100));
             FarmingMenu.Add("Ejungle", new CheckBox("Use E in Jungle"));
             FarmingMenu.Add("EjungleMana", new Slider("Mana < %", 30, 0, 100));
             FarmingMenu.Add("Rjungle", new CheckBox("Use R in Jungle"));
@@ -145,6 +151,7 @@ namespace Perfect_Udyr
                 SmiteMenu.Add("Blue?", new CheckBox("Blue"));
                 SmiteMenu.Add("Dragon?", new CheckBox("Dragon"));
                 SmiteMenu.Add("Baron?", new CheckBox("Baron"));
+                SmiteMenu.Add("Small?", new CheckBox("Small Camps"));
             }
 
 
@@ -178,8 +185,8 @@ namespace Perfect_Udyr
             DrawMenu.Add("drawR", new CheckBox("Draw R Range"));
 
             UpdateMenu = Menu.AddSubMenu("Last Update Logs", "Updates");
-            UpdateMenu.AddLabel("V0.0.1");
-            UpdateMenu.AddLabel("-Share");
+            UpdateMenu.AddLabel("V0.0.2");
+            UpdateMenu.AddLabel("-Smite Jungle Camps Fixed");
 
             Game.OnTick += Game_OnTick;
             Drawing.OnDraw += Drawing_OnDraw;
@@ -196,10 +203,10 @@ namespace Perfect_Udyr
                 SmiteSlot = spell.Slot;
             }
         }
+        
 
 
-
-        private static void Game_OnTick(EventArgs args)
+    private static void Game_OnTick(EventArgs args)
         {
             var HPpot = MiscMenu["useHP"].Cast<CheckBox>().CurrentValue;
             var Mpot = MiscMenu["useMana"].Cast<CheckBox>().CurrentValue;
@@ -213,6 +220,25 @@ namespace Perfect_Udyr
             var igntarget = TargetSelector.GetTarget(600, DamageType.True);
             var t = TargetSelector.GetTarget(600, DamageType.Magical);
 
+            if (Smite != null)
+            {
+                if (Smite.IsReady() && SmiteMenu["Use Smite?"].Cast<CheckBox>().CurrentValue)
+                {
+                    Obj_AI_Minion Mob = EntityManager.MinionsAndMonsters.GetJungleMonsters(_Player.Position, Smite.Range).FirstOrDefault();
+
+                    if (Mob != default(Obj_AI_Minion))
+                    {
+                        bool kill = GetSmiteDamage() >= Mob.Health;
+
+                        if (kill)
+                        {
+                            if ((Mob.Name.Contains("SRU_Dragon") || Mob.Name.Contains("SRU_Baron"))) Smite.Cast(Mob);
+                            else if (Mob.Name.StartsWith("SRU_Red") && SmiteMenu["Red?"].Cast<CheckBox>().CurrentValue) Smite.Cast(Mob);
+                            else if (Mob.Name.StartsWith("SRU_Blue") && SmiteMenu["Blue?"].Cast<CheckBox>().CurrentValue) Smite.Cast(Mob);                          
+                        }
+                    }
+                }
+            }
 
             if (HPpot && Player.Instance.HealthPercent < HPv)
             {
@@ -357,6 +383,7 @@ namespace Perfect_Udyr
                 _Player.Spellbook.CastSpell(SmiteSlot, t);
             }
         }
+    
 
         private static void Combo()
         {
@@ -597,8 +624,25 @@ namespace Perfect_Udyr
             {
                 Drawing.DrawCircle(_Player.Position, R.Range, System.Drawing.Color.Red);
             }
+            if (ComboMenu["combostyle"].Cast<CheckBox>().CurrentValue)
+            {
+                var enez = Drawing.WorldToScreen(_Player.Position);
+                    Drawing.DrawText(enez[0] - 20,enez[1],System.Drawing.Color.OrangeRed,"sda" + ComboMenu["combostyle"].Cast<Slider>().CurrentValue);
+                
+            }
         }
+        static float GetSmiteDamage()
+        {
+            float damage = new float();
 
+            if (_Player.Level < 10) damage = 360 + (_Player.Level - 1) * 30;
+
+            else if (_Player.Level < 15) damage = 280 + (_Player.Level - 1) * 40;
+
+            else if (_Player.Level < 19) damage = 150 + (_Player.Level - 1) * 50;
+
+            return damage;
+        }
         private static bool isInQStance
         {
             get { return ObjectManager.Player.HasBuff("UdyrTigerStance"); }
