@@ -21,10 +21,12 @@ namespace Perfect_Udyr
         public static Spell.Active E;
         public static Spell.Active R;
         static Spell.Targeted Smite = null;
-        public static Menu Menu, FarmingMenu, MiscMenu, DrawMenu, HarassMenu, ComboMenu, SmiteMenu, UpdateMenu;
+        public static Menu Menu, FarmingMenu, MiscMenu, DrawMenu, HarassMenu, ComboMenu, SmiteMenu, UpdateMenu, JungleMenu;
         static Item Healthpot;
         static Item Manapot;
-        static Item CrystalFlask;
+        static Item HuntersPotion;
+        static Item CorruptionPotion;
+        static Item RefillablePotion;
         public static SpellSlot SmiteSlot = SpellSlot.Unknown;
         public static SpellSlot IgniteSlot = SpellSlot.Unknown;
         private static readonly int[] SmitePurple = { 3713, 3726, 3725, 3726, 3723 };
@@ -79,7 +81,9 @@ namespace Perfect_Udyr
 
             Healthpot = new Item(2003, 0);
             Manapot = new Item(2004, 0);
-            CrystalFlask = new Item(2032, 0);
+            RefillablePotion = new Item(2031, 0);
+            HuntersPotion = new Item(2032, 0);
+            CorruptionPotion = new Item(2033, 0);
             uint level = (uint)Player.Instance.Level;
             Q = new Spell.Active(SpellSlot.Q, 250);
             W = new Spell.Active(SpellSlot.W, 250);
@@ -102,9 +106,9 @@ namespace Perfect_Udyr
             var Style = ComboMenu.Add("combostyle", new Slider("Combo Style", 0, 0, 1));
             Style.OnValueChange += delegate
             {
-                Style.DisplayName = "Combo Style: " + new[] { "Tiger Combo", "Phoenix Combo" }[Style.CurrentValue];
+                Style.DisplayName = "Combo Style: " + new[] { "Lane Combo", "Jungle Combo" }[Style.CurrentValue];
             };
-            Style.DisplayName = "Combo Style: " + new[] { "Tiger Combo", "Phoenix Combo" }[Style.CurrentValue];
+            Style.DisplayName = "Combo Style: " + new[] { "Lane Combo", "Jungle Combo" }[Style.CurrentValue];
 
             HarassMenu = Menu.AddSubMenu("Harass Settings", "HarassSettings");
             HarassMenu.AddLabel("None.");
@@ -121,23 +125,34 @@ namespace Perfect_Udyr
             FarmingMenu.Add("RlaneclearMana", new Slider("Mana < %", 60, 0, 100));
             FarmingMenu.Add("RlaneclearCount", new Slider("Count > ", 3, 1, 10));
 
-            FarmingMenu.AddLabel("Jungle Clear");
-            FarmingMenu.Add("Qjungle", new CheckBox("Use Q in Jungle"));
-            FarmingMenu.Add("QjungleMana", new Slider("Mana < %", 30, 0, 100));
-            FarmingMenu.Add("Wjungle", new CheckBox("Use W in Jungle"));
-            FarmingMenu.Add("WjungleMana", new Slider("Mana < %", 30, 0, 100));
-            FarmingMenu.Add("WjungleHealth", new Slider("Health < %", 85, 0, 100));
-            FarmingMenu.Add("Ejungle", new CheckBox("Use E in Jungle"));
-            FarmingMenu.Add("EjungleMana", new Slider("Mana < %", 30, 0, 100));
-            FarmingMenu.Add("Rjungle", new CheckBox("Use R in Jungle"));
-            FarmingMenu.Add("RjungleMana", new Slider("Mana < %", 30, 0, 100));
-
             FarmingMenu.AddLabel("Last Hit Settings");
             FarmingMenu.Add("Qlasthit", new CheckBox("Use Q LastHit"));
             FarmingMenu.Add("QlasthitMana", new Slider("Mana < %", 35, 0, 100));
-            FarmingMenu.Add("Wlasthit", new CheckBox("Use W LastHit"));           
+            FarmingMenu.Add("Wlasthit", new CheckBox("Use W LastHit"));
             FarmingMenu.Add("WlasthitMana", new Slider("Mana < %", 35, 0, 100));
             FarmingMenu.Add("WlasthitHealth", new Slider("Health < %", 60, 0, 100));
+
+
+            JungleMenu = Menu.AddSubMenu("Jungle Clear", "JungSettings");
+
+            JungleMenu.AddLabel("Jungle Clear");
+            JungleMenu.Add("Qjungle", new CheckBox("Use Q in Jungle"));
+            JungleMenu.Add("QjungleMana", new Slider("Mana < %", 30, 0, 100));
+            JungleMenu.Add("Wjungle", new CheckBox("Use W in Jungle"));
+            JungleMenu.Add("WjungleMana", new Slider("Mana < %", 30, 0, 100));
+            JungleMenu.Add("WjungleHealth", new Slider("Health < %", 90, 0, 100));
+            JungleMenu.Add("Ejungle", new CheckBox("Use E in Jungle"));
+            JungleMenu.Add("EjungleMana", new Slider("Mana < %", 30, 0, 100));
+            JungleMenu.Add("Rjungle", new CheckBox("Use R in Jungle"));
+            JungleMenu.Add("RjungleMana", new Slider("Mana < %", 30, 0, 100));
+            var JungleStyle = JungleMenu.Add("jungstyle", new Slider("Combo Style", 0, 0, 3));
+            JungleStyle.OnValueChange += delegate
+            {
+                JungleStyle.DisplayName = "Combo Style: " + new[] { "Q-E", "Q-W", "R-E", "R-W" }[JungleStyle.CurrentValue];
+            };
+            JungleStyle.DisplayName = "Combo Style: " + new[] { "Q-E", "Q-W", "R-E", "R-W" }[JungleStyle.CurrentValue];
+
+            
 
 
             SetSmiteSlot();
@@ -183,10 +198,6 @@ namespace Perfect_Udyr
             DrawMenu = Menu.AddSubMenu("Draw Settings", "Drawings");
             DrawMenu.Add("drawAA", new CheckBox("Draw AA Range"));
             DrawMenu.Add("drawR", new CheckBox("Draw R Range"));
-
-            UpdateMenu = Menu.AddSubMenu("Last Update Logs", "Updates");
-            UpdateMenu.AddLabel("V0.0.2");
-            UpdateMenu.AddLabel("-Smite Jungle Camps Fixed");
 
             Game.OnTick += Game_OnTick;
             Drawing.OnDraw += Drawing_OnDraw;
@@ -255,14 +266,22 @@ namespace Perfect_Udyr
                     Manapot.Cast();
                 }
             }
-            
+
             if (Crystal && Player.Instance.HealthPercent < CrystalHPv || Crystal && Player.Instance.ManaPercent < CrystalManav)
             {
-                if (Item.HasItem(CrystalFlask.Id) && Item.CanUseItem(CrystalFlask.Id) && !Player.HasBuff("RegenerationPotion") && !Player.HasBuff("FlaskOfCrystalWater") && !Player.HasBuff("ItemCrystalFlask"))
+                if (Item.HasItem(RefillablePotion.Id) && Item.CanUseItem(RefillablePotion.Id) && !Player.HasBuff("RegenerationPotion") && !Player.HasBuff("FlaskOfCrystalWater") && !Player.HasBuff("ItemCrystalFlask"))
                 {
-                    CrystalFlask.Cast();
+                    RefillablePotion.Cast();
                 }
-               
+                else if (Item.HasItem(CorruptionPotion.Id) && Item.CanUseItem(CorruptionPotion.Id) && !Player.HasBuff("RegenerationPotion") && !Player.HasBuff("FlaskOfCrystalWater") && !Player.HasBuff("ItemCrystalFlask") && !Player.HasBuff("ItemDarkCrystalFlaskJungle"))
+                {
+                    CorruptionPotion.Cast();
+                }
+                else if (Item.HasItem(HuntersPotion.Id) && Item.CanUseItem(HuntersPotion.Id) && !Player.HasBuff("RegenerationPotion") && !Player.HasBuff("FlaskOfCrystalWater") && !Player.HasBuff("ItemCrystalFlask") && !Player.HasBuff("ItemCrystalFlaskJungle"))
+                {
+                    HuntersPotion.Cast();
+                }
+
             }
 
             if (useItem && target.IsValidTarget(400) && !target.IsDead && !target.IsZombie && target.HealthPercent < 100)
@@ -544,37 +563,67 @@ namespace Perfect_Udyr
         }
         private static void JungleClear()
         {
-            var useQ = FarmingMenu["Qjungle"].Cast<CheckBox>().CurrentValue;
-            var useQMana = FarmingMenu["QjungleMana"].Cast<Slider>().CurrentValue;
-            var useW = FarmingMenu["Wjungle"].Cast<CheckBox>().CurrentValue;
-            var useWMana = FarmingMenu["WjungleMana"].Cast<Slider>().CurrentValue;
-            var useE = FarmingMenu["Ejungle"].Cast<CheckBox>().CurrentValue;
-            var useEMana = FarmingMenu["EjungleMana"].Cast<Slider>().CurrentValue;
-            var useR = FarmingMenu["Rjungle"].Cast<CheckBox>().CurrentValue;
-            var useRMana = FarmingMenu["RjungleMana"].Cast<Slider>().CurrentValue;
-            var useWHealth = FarmingMenu["WjungleHealth"].Cast<Slider>().CurrentValue;
+            var useQ = JungleMenu["Qjungle"].Cast<CheckBox>().CurrentValue;
+            var useQMana = JungleMenu["QjungleMana"].Cast<Slider>().CurrentValue;
+            var useW = JungleMenu["Wjungle"].Cast<CheckBox>().CurrentValue;
+            var useWMana = JungleMenu["WjungleMana"].Cast<Slider>().CurrentValue;
+            var useE = JungleMenu["Ejungle"].Cast<CheckBox>().CurrentValue;
+            var useEMana = JungleMenu["EjungleMana"].Cast<Slider>().CurrentValue;
+            var useR = JungleMenu["Rjungle"].Cast<CheckBox>().CurrentValue;
+            var useRMana = JungleMenu["RjungleMana"].Cast<Slider>().CurrentValue;
+            var useWHealth = JungleMenu["WjungleHealth"].Cast<Slider>().CurrentValue;
+            var JungleStyle = JungleMenu["jungstyle"].Cast<Slider>().CurrentValue;
             foreach (var monster in EntityManager.MinionsAndMonsters.Monsters)
             {
-                if (useE && E.IsReady() && _Player.Distance(monster) < _Player.AttackRange && _Player.Mana > useEMana && _Player.ManaPercent >= useEMana && !monster.HasBuff("udyrbearstuncheck"))
+                switch (JungleStyle)
                 {
-                    E.Cast();
+                    case 0:
+                        if (useQ && Q.IsReady() && _Player.Distance(monster) < _Player.AttackRange && _Player.ManaPercent >= useQMana)
+                        {
+                            Q.Cast();
+                        }
+                        else if (useE && E.IsReady() && _Player.Distance(monster) < _Player.AttackRange && _Player.Mana > useEMana && _Player.ManaPercent >= useEMana && !monster.HasBuff("udyrbearstuncheck"))
+                        {
+                            E.Cast();
+                        }
+                        HandleItems();
+                        break;
+                    case 1:
+                        if (useQ && Q.IsReady() && _Player.Distance(monster) < _Player.AttackRange && _Player.ManaPercent >= useQMana)
+                        {
+                            Q.Cast();
+                        }
+                        else if (useW && W.IsReady() && _Player.Distance(monster) < _Player.AttackRange && _Player.ManaPercent >= useWMana && _Player.HealthPercent <= useWHealth)
+                        {
+                            W.Cast();
+                        }
+                        HandleItems();
+                        break;
+                    case 2:
+                        if (useR && R.IsReady() && _Player.Distance(monster) < _Player.AttackRange && _Player.ManaPercent >= useRMana)
+                        {
+                            R.Cast();
+                        }
+                        else if (useE && E.IsReady() && _Player.Distance(monster) < _Player.AttackRange && _Player.Mana > useEMana && _Player.ManaPercent >= useEMana && !monster.HasBuff("udyrbearstuncheck"))
+                        {
+                            E.Cast();
+                        }
+                        HandleItems();
+                        break;
+                    case 3:
+                        if (useR && R.IsReady() && _Player.Distance(monster) < _Player.AttackRange && _Player.ManaPercent >= useRMana)
+                        {
+                            R.Cast();
+                        }
+                        else if (useW && W.IsReady() && _Player.Distance(monster) < _Player.AttackRange && _Player.ManaPercent >= useWMana && _Player.HealthPercent <= useWHealth)
+                        {
+                            W.Cast();
+                        }
+                        HandleItems();
+                        break; 
                 }
-                else if (useW && W.IsReady() && _Player.Distance(monster) < _Player.AttackRange  && _Player.ManaPercent >= useWMana && _Player.HealthPercent <= useWHealth)
-                {
-                    W.Cast();
-                }
-
-                else if (useR && R.IsReady() && _Player.Distance(monster) < _Player.AttackRange && _Player.ManaPercent >= useRMana)
-                {
-                    R.Cast();
-                }
-
-                else if (useQ && Q.IsReady() && _Player.Distance(monster) < _Player.AttackRange && _Player.ManaPercent >= useQMana)
-                {
-                    Q.Cast();
-                }
-                HandleItems();
-            }
+            }                   
+                          
         }
         private static void LastHit()
         {
