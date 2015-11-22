@@ -106,9 +106,9 @@ namespace Perfect_Udyr
             var Style = ComboMenu.Add("combostyle", new Slider("Combo Style", 0, 0, 1));
             Style.OnValueChange += delegate
             {
-                Style.DisplayName = "Combo Style: " + new[] { "Lane Combo", "Jungle Combo" }[Style.CurrentValue];
+                Style.DisplayName = "Combo Style: " + new[] { "Tiger Combo", "Phoenix Combo" }[Style.CurrentValue];
             };
-            Style.DisplayName = "Combo Style: " + new[] { "Lane Combo", "Jungle Combo" }[Style.CurrentValue];
+            Style.DisplayName = "Combo Style: " + new[] { "Tiger Combo", "Phoenix Combo" }[Style.CurrentValue];
 
             HarassMenu = Menu.AddSubMenu("Harass Settings", "HarassSettings");
             HarassMenu.AddLabel("None.");
@@ -424,6 +424,10 @@ namespace Perfect_Udyr
                     {
                         E.Cast();
                     }
+                    if (useW && W.IsReady() && _Player.Distance(target) <= W.Range && target.HasBuff("udyrbearstuncheck"))
+                    {
+                        W.Cast();
+                    }
                     if (useR && R.IsReady() && !HavePhoenixAoe && _Player.Distance(target) <= R.Range && target.HasBuff("udyrbearstuncheck"))
                     {
                         R.Cast();
@@ -432,10 +436,7 @@ namespace Perfect_Udyr
                     {
                         Q.Cast();
                     }
-                    if (useW && W.IsReady() && _Player.Distance(target) <= W.Range && target.HasBuff("udyrbearstuncheck"))
-                    {
-                        W.Cast();
-                    }
+                    
                     break;
                 case 1:
                     if (E.IsReady() && _Player.Distance(target) > E.Range)
@@ -446,6 +447,11 @@ namespace Perfect_Udyr
                     {
                         E.Cast();
                     }
+                    if (useW && W.IsReady() && _Player.Distance(target) <= W.Range && target.HasBuff("udyrbearstuncheck"))
+                    {
+                        W.Cast();
+                    }
+
                     if (useQ && Q.IsReady() && _Player.Distance(target) <= Q.Range && target.HasBuff("udyrbearstuncheck"))
                     {
                         Q.Cast();
@@ -454,11 +460,7 @@ namespace Perfect_Udyr
                     {
                         R.Cast();
                     }
-                    if (useW && W.IsReady() && _Player.Distance(target) <= W.Range && target.HasBuff("udyrbearstuncheck"))
-                    {
-                        W.Cast();
-                    }
-
+                    
                     break;
                 default:
                     if (E.IsReady() && _Player.Distance(target) > E.Range)
@@ -469,6 +471,10 @@ namespace Perfect_Udyr
                     {
                         E.Cast();
                     }
+                    if (useW && W.IsReady() && _Player.Distance(target) <= W.Range && target.HasBuff("udyrbearstuncheck"))
+                    {
+                        W.Cast();
+                    }
                     if (useR && R.IsReady() && !HavePhoenixAoe && _Player.Distance(target) <= R.Range && target.HasBuff("udyrbearstuncheck"))
                     {
                         R.Cast();
@@ -477,10 +483,7 @@ namespace Perfect_Udyr
                     {
                         Q.Cast();
                     }
-                    if (useW && W.IsReady() && _Player.Distance(target) <= W.Range && target.HasBuff("udyrbearstuncheck"))
-                    {
-                        W.Cast();
-                    }
+                    
 
                     break;
             }
@@ -589,14 +592,15 @@ namespace Perfect_Udyr
                         HandleItems();
                         break;
                     case 1:
-                        if (useQ && Q.IsReady() && _Player.Distance(monster) < _Player.AttackRange && _Player.ManaPercent >= useQMana)
-                        {
-                            Q.Cast();
-                        }
-                        else if (useW && W.IsReady() && _Player.Distance(monster) < _Player.AttackRange && _Player.ManaPercent >= useWMana && _Player.HealthPercent <= useWHealth)
+                        if (useW && W.IsReady() && _Player.Distance(monster) < _Player.AttackRange && _Player.ManaPercent >= useWMana && _Player.HealthPercent <= useWHealth)
                         {
                             W.Cast();
                         }
+                        else if (useQ && Q.IsReady() && _Player.Distance(monster) < _Player.AttackRange && _Player.ManaPercent >= useQMana)
+                        {
+                            Q.Cast();
+                        }
+                        
                         HandleItems();
                         break;
                     case 2:
@@ -611,13 +615,14 @@ namespace Perfect_Udyr
                         HandleItems();
                         break;
                     case 3:
-                        if (useR && R.IsReady() && _Player.Distance(monster) < _Player.AttackRange && _Player.ManaPercent >= useRMana)
-                        {
-                            R.Cast();
-                        }
-                        else if (useW && W.IsReady() && _Player.Distance(monster) < _Player.AttackRange && _Player.ManaPercent >= useWMana && _Player.HealthPercent <= useWHealth)
+                       
+                        if (useW && W.IsReady() && _Player.Distance(monster) < _Player.AttackRange && _Player.ManaPercent >= useWMana && _Player.HealthPercent <= useWHealth)
                         {
                             W.Cast();
+                        }
+                        else if (useR && R.IsReady() && _Player.Distance(monster) < _Player.AttackRange && _Player.ManaPercent >= useRMana)
+                        {
+                            R.Cast();
                         }
                         HandleItems();
                         break; 
