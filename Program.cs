@@ -388,7 +388,7 @@ namespace Perfect_Udyr
         }
         private static void Flee()
         {
-
+            E.Cast();
         }
         private static void SmiteOnTarget(AIHeroClient t)
         {

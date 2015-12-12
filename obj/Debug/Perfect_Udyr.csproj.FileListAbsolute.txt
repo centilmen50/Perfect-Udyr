@@ -12,3 +12,6 @@ C:\Users\Mertss\Desktop\Perfect Udyr\obj\Debug\Perfect_Udyr.pdb
 C:\Users\Mertss\Desktop\My Addons\Perfect Udyr\bin\Debug\Perfect_Udyr.exe.config
 C:\Users\Mertss\Desktop\My Addons\Perfect Udyr\obj\Debug\Perfect_Udyr.exe
 C:\Users\Mertss\Desktop\My Addons\Perfect Udyr\obj\Debug\Perfect_Udyr.pdb
+C:\Users\Mertss\Desktop\Üzerinde Çalıştığım Addonalr\My Addons\Perfect Udyr\bin\Debug\Perfect_Udyr.exe.config
+C:\Users\Mertss\Desktop\Üzerinde Çalıştığım Addonalr\My Addons\Perfect Udyr\obj\Debug\Perfect_Udyr.exe
+C:\Users\Mertss\Desktop\Üzerinde Çalıştığım Addonalr\My Addons\Perfect Udyr\obj\Debug\Perfect_Udyr.pdb
